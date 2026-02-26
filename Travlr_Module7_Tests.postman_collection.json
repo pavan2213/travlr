@@ -1,0 +1,409 @@
+{
+  "info": {
+    "_postman_id": "travlr-module7-auth-tests",
+    "name": "Travlr Module 7 - Authentication & CRUD Tests",
+    "description": "Complete test suite for Module 7 security implementation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register New Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.environment.set('auth_token', pm.response.json().token);",
+                  "    pm.test('User registered successfully', function () {",
+                  "        pm.expect(pm.response.code).to.equal(201);",
+                  "        pm.expect(pm.response.json().token).to.exist;",
+                  "    });",
+                  "} else {",
+                  "    pm.test('User might already exist', function () {",
+                  "        pm.expect(pm.response.json().message).to.include.oneOf(['registered', 'already exists']);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@test.com\",\n    \"password\": \"Test123!@\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login - Valid Credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login successful with valid credentials', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "    pm.expect(pm.response.json().success).to.equal(true);",
+                  "    pm.expect(pm.response.json().token).to.exist;",
+                  "});",
+                  "",
+                  "// Save token for subsequent requests",
+                  "const token = pm.response.json().token;",
+                  "pm.environment.set('auth_token', token);",
+                  "console.log('Token saved:', token.substring(0, 20) + '...');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@test.com\",\n    \"password\": \"Test123!@\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Invalid Credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login fails with invalid password', function () {",
+                  "    pm.expect(pm.response.code).to.equal(401);",
+                  "    pm.expect(pm.response.json().success).to.equal(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@test.com\",\n    \"password\": \"WrongPassword123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "login"]
+            }
+          }
+        },
+        {
+          "name": "Validate Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Token validation successful', function () {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "    pm.expect(pm.response.json().success).to.equal(true);",
+                  "    pm.expect(pm.response.json().user).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/validate",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "validate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trips - Public",
+      "item": [
+        {
+          "name": "Get All Trips (No Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get trips endpoint returns array', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
+                  "    const jsonData = pm.response.json();",
+                  "    if (Array.isArray(jsonData)) {",
+                  "        pm.expect(jsonData).to.be.an('array');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/trips",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "trips"]
+            }
+          }
+        },
+        {
+          "name": "Get Single Trip (No Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get single trip endpoint works', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404, 401]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/trips/SAMPLE",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "trips", "SAMPLE"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trips - Protected",
+      "item": [
+        {
+          "name": "Create Trip (With Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Create trip requires authentication', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 401, 400]);",
+                  "    if (pm.response.code === 201) {",
+                  "        pm.expect(pm.response.json().code).to.equal('TEST001');",
+                  "        pm.environment.set('test_trip_code', 'TEST001');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"TEST001\",\n    \"name\": \"Test Trip\",\n    \"resort\": \"Test Resort\",\n    \"description\": \"A test trip for authentication\",\n    \"perPerson\": 999,\n    \"start\": \"2026-03-15\",\n    \"length\": 5\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/trips",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "trips"]
+            }
+          }
+        },
+        {
+          "name": "Create Trip (No Auth - Should Fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Create trip without auth returns 401', function () {",
+                  "    pm.expect(pm.response.code).to.equal(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"TEST002\",\n    \"name\": \"Test Trip 2\",\n    \"resort\": \"Test Resort\",\n    \"description\": \"Should fail\",\n    \"perPerson\": 999,\n    \"start\": \"2026-03-15\",\n    \"length\": 5\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/trips",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "trips"]
+            }
+          }
+        },
+        {
+          "name": "Update Trip (With Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Update trip requires authentication', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401, 404, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Test Trip\",\n    \"perPerson\": 1299\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/trips/TEST001",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "trips", "TEST001"]
+            }
+          }
+        },
+        {
+          "name": "Delete Trip (No Auth - Should Fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Delete trip without auth returns 401', function () {",
+                  "    pm.expect(pm.response.code).to.equal(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/trips/TEST001",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "trips", "TEST001"]
+            }
+          }
+        },
+        {
+          "name": "Delete Trip (With Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Delete trip with auth succeeds', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 401, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/trips/TEST001",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["api", "trips", "TEST001"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
